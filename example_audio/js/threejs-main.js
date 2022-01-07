@@ -26,21 +26,49 @@ const light = new THREE.PointLight( 0xffffff, 2.0);
 light.position.set( 0, 0.5, 5);
 scene.add( light );
 
-/*
-// GROUND
-const groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
-const groundMat = new THREE.MeshLambertMaterial( { color: 0xffffff } );
-groundMat.color.setHSL( 0.095, 1, 0.75 );
-
-const ground = new THREE.Mesh( groundGeo, groundMat );
-ground.position.y = - 33;
-ground.rotation.x = - Math.PI / 2;
-ground.receiveShadow = true;
-scene.add( ground );
-*/
-
 //VARIABLES
 var delta = 0;
+
+//========================AUDIO======================================//
+
+//audio source
+var file = document.getElementById("audiofile");
+var audio = document.getElementById("audio");
+
+file.onchange = function(){
+
+	// audio.classList.add('active');
+	let files = this.files;
+
+	audio.src = URL.createObjectURL(files[0]);
+	audio.load();
+	audio.play();
+}
+
+function analyseAudio()
+{
+
+}
+
+function playSineTone()
+{
+	var context = new AudioContext();
+
+	//create oscillator
+	var oscNode = context.createOscillator();
+	oscNode.frequency = 220;
+	oscNode.type = "sine";
+
+	//create gain
+	var gainNode = context.createGain();
+	gainNode.gain.value = 0.2;
+	
+	oscNode.connect(gainNode).connect(context.destination);
+	oscNode.start();
+}
+
+
+
 
 //========================EVENT==================================//
 
@@ -62,13 +90,13 @@ var update = function()
 	cube.rotation.x += 0.01;
 	cube.rotation.y += 0.01;
 
-	/*
+	
 	//Rotating camera
-	delta += 0.01;
-	camera.lookAt(cube.position);
-	camera.position.x = Math.sin(delta) * 5;
-	camera.position.z = Math.cos(delta) * 5;
-	*/
+	// delta += 0.01;
+	// camera.lookAt(cube.position);
+	// camera.position.x = Math.sin(delta) * 5;
+	// camera.position.z = Math.cos(delta) * 5;
+	
 }
 
 //Draw scene
