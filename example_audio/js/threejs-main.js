@@ -29,11 +29,137 @@ scene.add( light );
 //VARIABLES
 var delta = 0;
 
+//AUDIO GLOBAL
+var context = new (window.AudioContext || window.webkitAudioContext)();
+
 //========================AUDIO======================================//
+
+function Sine()
+{
+	this.sampleRate;
+
+	this.deltaPhase;
+	this.currentPhase;
+	this.frequency;
+
+	this.setup = function(sampleRate)
+	{
+		this.sampleRate = sampleRate;
+	}
+
+	this.setFrequency = function(frequency)
+	{
+		this.frequency = frequency;
+		this.deltaPhase = 2 * Math.PI * frequency/this.sampleRate;
+		this.currentPhase = 0;
+	}
+
+	this.doSine = function()
+	{
+		var y = Math.sin(this.currentPhase);
+		this.currentPhase += this.deltaPhase;
+		if(this.currentPhase>= 2*Math.PI)
+		{
+			this.currentPhase = 2*Math.PI;
+		}
+		return y;
+	}
+
+	this.execute = function(buffer)
+	{
+		//the writing function
+		for(let c = 0; c<buffer.writeBuff.numberOfChannels; ++c)
+		{
+			let phase = this.currentPhase;
+
+			var data = buffer.writeBuff.getChannelData(c);
+			for(let s = 0; s<buffer.writeBuff.length; ++s)
+			{
+				data[s] = Math.sin(phase);
+				phase+=this.deltaPhase;
+			}
+		}
+
+		this.currentPhase += (this.deltaPhase*buffer.writeBuff.length);
+	}
+}
+
+//Double buffer - quick example
+function DoubleBuffer()
+{
+	this.bufferLength = 44100;
+	
+	this.readBuff = context.createBuffer(2, this.bufferLength, context.sampleRate);
+	this.writeBuff = context.createBuffer(2, this.bufferLength, context.sampleRate);
+
+	//called to swap the buffer after we have written
+	this.swap = function()
+	{
+		[this.readBuff, this.writeBuff] = [this.writeBuff, this.readBuff];
+	};
+}
+
+var doubleBuffer = new DoubleBuffer();
+
+var mySine = new Sine();
+mySine.setup(context.sampleRate);
+mySine.setFrequency(440);
+
+var bufferLengthSec = doubleBuffer.bufferLength/context.sampleRate;
+
+function execute()
+{
+	var source = context.createBufferSource();
+	source.buffer = doubleBuffer.readBuff;
+	source.connect(context.destination);
+	source.start();
+
+	//start the writing
+	setTimeout(function(){
+		//console.log("write");
+
+		//mySine.execute(doubleBuffer);
+
+		//random
+		for(let c = 0; c<doubleBuffer.writeBuff.numberOfChannels; ++c)
+		{
+			var data = doubleBuffer.writeBuff.getChannelData(c);
+			for(let s = 0; s<doubleBuffer.writeBuff.length; ++s)
+			{
+				data[s] = Math.random() * 2 - 1;
+			}
+		}
+
+		doubleBuffer.swap();
+	}, 0);
+
+	setTimeout(execute, bufferLengthSec);
+}
 
 //audio source
 var file = document.getElementById("audiofile");
 var audio = document.getElementById("audio");
+
+file.onclick = function(){
+	//create a buffer
+	var buffer = context.createBuffer(2, 2048, context.sampleRate);
+
+	for(let c = 0; c<buffer.numberOfChannels; ++c)
+	{
+		var writeBuffer = buffer.getChannelData(c);
+		for(let s = 0; s<buffer.length; ++s)
+		{
+			let random = Math.random() * 2 - 1;
+			writeBuffer[s] = random; //as Math.random is 0-1
+		}
+	}
+
+	//playSound(buffer);
+
+	//callback function happening every buffer length in seconds
+	setTimeout(execute, 0);
+
+}
 
 file.onchange = function(){
 
@@ -50,10 +176,20 @@ function analyseAudio()
 
 }
 
+function playSound(buffer)
+{
+	var source = context.createBufferSource();
+	source.buffer = buffer;
+	source.connect(context.destination);
+	source.start();
+
+	source.onended = function(){
+		playSound(buffer);
+	}
+}
+
 function playSineTone()
 {
-	var context = new AudioContext();
-
 	//create oscillator
 	var oscNode = context.createOscillator();
 	oscNode.frequency = 220;
