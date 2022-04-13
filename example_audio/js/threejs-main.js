@@ -157,7 +157,30 @@ file.onclick = function(){
 	//playSound(buffer);
 
 	//callback function happening every buffer length in seconds
-	setTimeout(execute, 0);
+	//setTimeout(execute, 0);
+
+	// function loadModule()
+	// {
+	// 	context.audioWorklet.addModule('random-noise-processor.js');
+	// 	const randomNoiseNode = new AudioWorkletNode(context, 'random-noise-processor');
+	// 	randomNoiseNode.connect(context.destination);
+	// }
+
+	// loadModule();
+
+
+
+	const audioContext = new AudioContext();
+
+	async function loadModules() {
+		// Load multiple modules sequentially.
+		return await context.audioWorklet.addModule('random-noise-processor.js');
+	}
+
+	loadModules().then(() => {
+  		const workletNode = new AudioWorkletNode(audioContext, 'random-noise-processor');
+  		workletNode.connect(audioContext.destination);
+	});
 
 }
 
