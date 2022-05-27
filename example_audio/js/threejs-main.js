@@ -142,7 +142,7 @@ var audio = document.getElementById("audio");
 
 file.onclick = function(){
 	//create a buffer
-	var buffer = context.createBuffer(2, 2048, context.sampleRate);
+	var buffer = context.createBuffer(2, context.sampleRate*10, context.sampleRate);
 
 	for(let c = 0; c<buffer.numberOfChannels; ++c)
 	{
@@ -166,22 +166,35 @@ file.onclick = function(){
 	// 	randomNoiseNode.connect(context.destination);
 	// }
 
-	// loadModule();
+	// async function loadModules() {
+	// 	// Load multiple modules sequentially.
+	// 	return await context.audioWorklet.addModule('js/random-noise-processor.js');
+	// }
 
+	// loadModules().then(() => {
+	// 	console.log("module loaded");
 
+	// 	var newContext = new (window.AudioContext || window.webkitAudioContext)();
 
-	const audioContext = new AudioContext();
+  	// 	const workletNode = new AudioWorkletNode(context, 'random-noise-processor');
+  	// 	workletNode.connect(context.destination);
 
-	async function loadModules() {
-		// Load multiple modules sequentially.
-		return await context.audioWorklet.addModule('random-noise-processor.js');
-	}
+	// 	context.resume();
+		
+	// });
 
-	loadModules().then(() => {
-  		const workletNode = new AudioWorkletNode(audioContext, 'random-noise-processor');
-  		workletNode.connect(audioContext.destination);
-	});
+	const runRandomNoise = async (context) => {
+	  await context.audioWorklet.addModule('js/random-noise-processor.js');
+	  const modulator = new OscillatorNode(context);
+	  const gainNode = new GainNode(context);
+	  const noiseGenerator = new AudioWorkletNode(context, 'random-noise-processor');
+	  noiseGenerator.connect(context.destination);
 
+	  context.resume(); //apparently have to resume the context to make the AudioWorkletNode work
+	};
+
+	runRandomNoise(context);
+  
 }
 
 file.onchange = function(){
@@ -206,6 +219,7 @@ function playSound(buffer)
 	source.connect(context.destination);
 	source.start();
 
+	//loop
 	source.onended = function(){
 		playSound(buffer);
 	}
