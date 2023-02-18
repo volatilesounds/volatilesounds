@@ -1,6 +1,6 @@
 const scene = new THREE.Scene();
 
-const renderer = new THREE.WebGLRenderer({ antialiasing: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 //renderer.setPixelRatio( 2.0); INCREASE QUALITY
 renderer.setClearColor( 0xF5F5F5, 1);
  var container = document.getElementsByClassName('container')[0];
@@ -188,7 +188,12 @@ file.onclick = function(){
 	  const modulator = new OscillatorNode(context);
 	  const gainNode = new GainNode(context);
 	  const noiseGenerator = new AudioWorkletNode(context, 'random-noise-processor');
-	  noiseGenerator.connect(context.destination);
+	  const filter = new BiquadFilterNode(context);
+	  filter.frequency.setValueAtTime(440, 0);
+	  filter.Q.setValueAtTime(50, 0);
+	  filter.type = "bandpass";
+	  noiseGenerator.connect(filter);
+	  filter.connect(context.destination);
 
 	  context.resume(); //apparently have to resume the context to make the AudioWorkletNode work
 	};
