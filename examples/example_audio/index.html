@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Example: Play Audio</title>
+		<style>
+			body { margin: 0; }
+			.container
+			{
+				height: 100vh;
+			}
+		</style>
+	</head>
+	<body>
+		<label for="audiofile" class="file normal">
+			Choose audio file
+			<input type="file" id="audiofile" accept="audio/*">
+		</label>
+		<!-- Add property: class controls="active" ; if you want to visualise the audio player UI -->
+		<audio id = "audio"></audio>
+		<div class ="container"></div>
+		<script src="../threejs/build/three.js"></script>
+		<script src="js/threejs-main.js"></script>
+		</div>
+	</body>
+</html>
