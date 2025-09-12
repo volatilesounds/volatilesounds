@@ -16,7 +16,7 @@ function App() {
     renderer.setClearColor( 0xF5F5F5, 1);
     renderer.setSize(w, h); //so that it takes the size of the element it is in
     
-    const rootDiv = document.getElementById('root');
+    const rootDiv = document.getElementById('vsounds-render');
     rootDiv.appendChild(renderer.domElement);
 
      
