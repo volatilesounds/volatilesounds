@@ -6,7 +6,8 @@ function App() {
   useEffect(()=>{
     const scene = new THREE.Scene();
 
-    const canvas = document.getElementById('temp');
+    //referencing the canvas which we create in this app render
+    const canvas = document.getElementById('app-canvas');
     var w = window.innerWidth;
     var h = window.innerHeight;
 
@@ -100,9 +101,7 @@ function App() {
   },[]);
 
   return (
-    <div>
-      <canvas id="temp"/>
-    </div>
+    <canvas id="app-canvas"/>
   )
 }
 
