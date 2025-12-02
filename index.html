@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>VolatileSounds Simulations</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .sim-cell {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+
+    .sim-title {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.6);
+      padding: 4px 8px;
+      font-size: 14px;
+      z-index: 2;
+    }
+
+    .sim-mount {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    .sim-mount.active {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="grid" id="sim-grid"></div>
+
+<script>
+// --------------------------------------------------
+// SETTINGS — Add your simulation folder names here
+// --------------------------------------------------
+const simulations = [
+  "sim-temp",
+  "sim-my-vite-project"
+];
+
+// --------------------------------------------------
+// PascalCase normalizer
+// --------------------------------------------------
+function normalizePascalCaseName(name) {
+  return name
+    .replace(/[^a-zA-Z0-9]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase() + w.slice(1))
+    .join("");
+}
+
+// --------------------------------------------------
+// Create grid items + load assets
+// --------------------------------------------------
+const grid = document.getElementById("sim-grid");
+
+simulations.forEach((simName, index) => {
+  const pretty = normalizePascalCaseName(simName);
+
+  // Create DOM structure
+  const cell = document.createElement("div");
+  cell.className = "sim-cell " + simName;
+
+  const label = document.createElement("div");
+  label.className = "sim-title";
+  label.textContent = simName;
+
+  const mount = document.createElement("div");
+  mount.className = "sim-mount";
+  mount.id = `vsounds-render-${simName}-${index}`;
+
+  cell.appendChild(label);
+  cell.appendChild(mount);
+  grid.appendChild(cell);
+
+  // CSS
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = `./${simName}/assets/index.css?n=${Date.now()}`;
+  document.head.appendChild(css);
+
+  // JS
+  const js = document.createElement("script");
+  js.src = `./${simName}/assets/index.js?n=${Date.now()}`;
+  js.onload = () => {
+    // Expected mount function: mountSimTempApp → from PascalCase
+    const fnName = "mount" + pretty + "App";
+
+    if (typeof window[fnName] === "function") {
+      window[fnName](mount);
+      mount.classList.add("active");
+    } else {
+      console.warn(`Mount function missing: window.${fnName}`);
+    }
+  };
+
+  js.onerror = () => {
+    console.error("Failed to load", js.src);
+  };
+
+  document.body.appendChild(js);
+});
+</script>
+
+</body>
+</html>
