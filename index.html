@@ -42,7 +42,7 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
+      z-index: -1; /* behind text */
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.8s ease-in-out;
@@ -59,17 +59,18 @@
 <div class="grid" id="sim-grid"></div>
 
 <script>
-// --------------------------------------------------
-// SETTINGS — Add your simulation folder names here
-// --------------------------------------------------
+// ------------------------------------------------------------------
+// List your simulation folders here
+// ------------------------------------------------------------------
 const simulations = [
   "sim-temp",
-  "sim-my-vite-project"
+  "sim-my-vite-react-app"
 ];
 
-// --------------------------------------------------
-// PascalCase normalizer
-// --------------------------------------------------
+// ------------------------------------------------------------------
+// Convert sim name → PascalCase mount function name
+// sim-temp → SimTemp → mountSimTempApp
+// ------------------------------------------------------------------
 function normalizePascalCaseName(name) {
   return name
     .replace(/[^a-zA-Z0-9]/g, " ")
@@ -79,15 +80,15 @@ function normalizePascalCaseName(name) {
     .join("");
 }
 
-// --------------------------------------------------
-// Create grid items + load assets
-// --------------------------------------------------
 const grid = document.getElementById("sim-grid");
 
+// ------------------------------------------------------------------
+// For each simulation, create cell + mount container + load manifest
+// ------------------------------------------------------------------
 simulations.forEach((simName, index) => {
   const pretty = normalizePascalCaseName(simName);
 
-  // Create DOM structure
+  // Create DOM elements
   const cell = document.createElement("div");
   cell.className = "sim-cell " + simName;
 
@@ -103,32 +104,52 @@ simulations.forEach((simName, index) => {
   cell.appendChild(mount);
   grid.appendChild(cell);
 
-  // CSS
-  const css = document.createElement("link");
-  css.rel = "stylesheet";
-  css.href = `./${simName}/assets/index.css?n=${Date.now()}`;
-  document.head.appendChild(css);
+  // ------------------------------------------------------------------
+  // Fetch manifest.json for this simulation
+  // ------------------------------------------------------------------
+  fetch(`./${simName}/manifest.json`)
+    .then(r => r.json())
+    .then(manifest => {
+      const entry = manifest["index.html"];
+      if (!entry) {
+        console.error(`manifest.json missing 'index.html' entry for ${simName}`);
+        return;
+      }
 
-  // JS
-  const js = document.createElement("script");
-  js.src = `./${simName}/assets/index.js?n=${Date.now()}`;
-  js.onload = () => {
-    // Expected mount function: mountSimTempApp → from PascalCase
-    const fnName = "mount" + pretty + "App";
+      const jsFile = entry.file;         // assets/index.[hash].js
+      const cssFile = entry.css?.[0];    // assets/index.[hash].css
 
-    if (typeof window[fnName] === "function") {
-      window[fnName](mount);
-      mount.classList.add("active");
-    } else {
-      console.warn(`Mount function missing: window.${fnName}`);
-    }
-  };
+      // Load CSS
+      if (cssFile) {
+        const css = document.createElement("link");
+        css.rel = "stylesheet";
+        css.href = `./${simName}/${cssFile}`;
+        document.head.appendChild(css);
+      }
 
-  js.onerror = () => {
-    console.error("Failed to load", js.src);
-  };
+      // Load JS
+      const js = document.createElement("script");
+      js.src = `./${simName}/${jsFile}`;
+      js.onload = () => {
+        const fnName = "mount" + pretty + "App";
 
-  document.body.appendChild(js);
+        if (typeof window[fnName] === "function") {
+          window[fnName](mount);
+          mount.classList.add("active");
+        } else {
+          console.warn(`Mount function missing: window.${fnName}`);
+        }
+      };
+
+      js.onerror = () => {
+        console.error("Failed to load", js.src);
+      };
+
+      document.body.appendChild(js);
+    })
+    .catch(err => {
+      console.error(`Error loading manifest for ${simName}`, err);
+    });
 });
 </script>
 
