@@ -104,10 +104,12 @@ simulations.forEach((simName, index) => {
   cell.appendChild(mount);
   grid.appendChild(cell);
 
+  const basePath = "./simulations";
+
   // ------------------------------------------------------------------
   // Fetch manifest.json for this simulation
   // ------------------------------------------------------------------
-  fetch(`./${simName}/manifest.json`)
+  fetch(`${basePath}/${simName}/manifest.json`)
     .then(r => r.json())
     .then(manifest => {
       const entry = manifest["index.html"];
@@ -123,13 +125,13 @@ simulations.forEach((simName, index) => {
       if (cssFile) {
         const css = document.createElement("link");
         css.rel = "stylesheet";
-        css.href = `./${simName}/${cssFile}`;
+        css.href = `${basePath}/${simName}/${cssFile}`;
         document.head.appendChild(css);
       }
 
       // Load JS
       const js = document.createElement("script");
-      js.src = `./${simName}/${jsFile}`;
+      js.src = `${basePath}/${simName}/${jsFile}`;
       js.onload = () => {
         const fnName = "mount" + pretty + "App";
 
